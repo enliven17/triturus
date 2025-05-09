@@ -27,7 +27,7 @@ A minimalist pixel-art styled DApp built on Sui Move that enables SUI wallet con
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/triturus.git
+git clone https://github.com/enliven17/triturus.git
 cd triturus
 ```
 
