@@ -1,106 +1,113 @@
 module triturus::donate {
-    use sui::object::{Self, UID};
+    use sui::object::{UID};
     use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
-    use sui::event;
+    use sui::tx_context::{TxContext};
     use sui::coin::{Self, Coin};
-    use sui::sui::SUI;
     use sui::balance::{Self, Balance};
-    use sui::name_service::{Self, NameService};
+    use sui::event;
+    use sui::sui::SUI;
 
-    // ===== Constants =====
-    const EInvalidAmount: u64 = 0;
-    const EInvalidDuration: u64 = 1;
+    /// Errors
+    const EInvalidAmount: u64 = 1;
     const EDuplicateSubscription: u64 = 2;
 
-    // ===== Structs =====
-    struct DonationCap has key {
+    /// Events
+    public struct DonationEvent has copy, drop {
+        donor: address,
+        amount: u64,
+        timestamp: u64
+    }
+
+    public struct SubscriptionEvent has copy, drop {
+        subscriber: address,
+        amount: u64,
+        timestamp: u64
+    }
+
+    /// Structs
+    public struct DonationCap has key {
         id: UID,
-        balance: Balance<SUI>
+        balance: Balance<SUI>,
+        total_donations: u64,
+        total_subscribers: u64
     }
 
-    struct Subscription has key, store {
+    public struct Subscription has key, store {
         id: UID,
+        subscriber: address,
         amount: u64,
-        duration: u64,
-        start_time: u64,
-        owner: address
+        start_time: u64
     }
 
-    // ===== Events =====
-    struct DonationEvent has copy, drop {
-        amount: u64,
-        sender: address,
-        message: vector<u8>
-    }
-
-    struct SubscriptionEvent has copy, drop {
-        amount: u64,
-        duration: u64,
-        owner: address
-    }
-
-    // ===== Functions =====
+    /// Functions
     fun init(ctx: &mut TxContext) {
-        let donation_cap = DonationCap {
+        let cap = DonationCap {
             id: object::new(ctx),
-            balance: balance::zero()
+            balance: balance::zero(),
+            total_donations: 0,
+            total_subscribers: 0
         };
-        transfer::share_object(donation_cap);
+        transfer::share_object(cap);
     }
 
-    public entry fun buy_triturus(
-        donation_cap: &mut DonationCap,
-        payment: &mut Coin<SUI>,
-        amount: u64,
-        message: vector<u8>,
+    public fun donate(
+        cap: &mut DonationCap,
+        payment: Coin<SUI>,
         ctx: &mut TxContext
     ) {
+        let amount = coin::value(&payment);
         assert!(amount > 0, EInvalidAmount);
         
-        let sui_balance = coin::into_balance(coin::from_coin(payment, ctx));
-        balance::join(&mut donation_cap.balance, sui_balance);
-        
-        event::emit(DonationEvent {
-            amount,
-            sender: tx_context::sender(ctx),
-            message
-        });
-    }
-
-    public entry fun create_subscription(
-        donation_cap: &mut DonationCap,
-        payment: &mut Coin<SUI>,
-        amount: u64,
-        duration: u64,
-        ctx: &mut TxContext
-    ) {
-        assert!(amount > 0, EInvalidAmount);
-        assert!(duration > 0, EInvalidDuration);
-        
+        let sui_balance = coin::into_balance(payment);
         let sender = tx_context::sender(ctx);
-        let sui_balance = coin::into_balance(coin::from_coin(payment, ctx));
-        balance::join(&mut donation_cap.balance, sui_balance);
         
+        // Update total donations
+        cap.total_donations = cap.total_donations + amount;
+        
+        // Emit donation event
+        event::emit(DonationEvent {
+            donor: sender,
+            amount,
+            timestamp: tx_context::epoch(ctx)
+        });
+        
+        // Transfer SUI to the contract
+        balance::join(&mut cap.balance, sui_balance);
+    }
+
+    public fun subscribe(
+        cap: &mut DonationCap,
+        payment: Coin<SUI>,
+        ctx: &mut TxContext
+    ) {
+        let amount = coin::value(&payment);
+        assert!(amount > 0, EInvalidAmount);
+        
+        let sui_balance = coin::into_balance(payment);
+        let sender = tx_context::sender(ctx);
+        
+        // Create subscription
         let subscription = Subscription {
             id: object::new(ctx),
+            subscriber: sender,
             amount,
-            duration,
-            start_time: tx_context::epoch(ctx),
-            owner: sender
+            start_time: tx_context::epoch(ctx)
         };
         
-        transfer::transfer(subscription, sender);
+        // Update total subscribers
+        cap.total_subscribers = cap.total_subscribers + 1;
         
+        // Emit subscription event
         event::emit(SubscriptionEvent {
+            subscriber: sender,
             amount,
-            duration,
-            owner: sender
+            timestamp: tx_context::epoch(ctx)
         });
-    }
-
-    // ===== View Functions =====
-    public fun get_donation_balance(donation_cap: &DonationCap): u64 {
-        balance::value(&donation_cap.balance)
+        
+        // Transfer SUI to the contract
+        balance::join(&mut cap.balance, sui_balance);
+        
+        // Transfer subscription to sender
+        transfer::transfer(subscription, sender);
     }
 } 

@@ -1,15 +1,22 @@
 module triturus::soulbound {
-    use sui::object::{Self, UID};
+    use sui::object::{UID};
     use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
-    use sui::event;
+    use sui::tx_context::{TxContext};
     use sui::url::{Self, Url};
+    use sui::event;
 
-    // ===== Constants =====
-    const EInvalidTier: u64 = 0;
+    /// Errors
+    const EInvalidTier: u64 = 1;
 
-    // ===== Structs =====
-    struct SoulboundNFT has store {
+    /// Events
+    public struct SoulboundMintedEvent has copy, drop {
+        owner: address,
+        tier: u8,
+        timestamp: u64
+    }
+
+    /// Structs
+    public struct SoulboundNFT has key, store {
         id: UID,
         tier: u8,
         owner: address,
@@ -17,36 +24,31 @@ module triturus::soulbound {
         minted_at: u64
     }
 
-    struct SoulboundCap has key {
-        id: UID
+    public struct SoulboundCap has key {
+        id: UID,
+        total_minted: u64
     }
 
-    // ===== Events =====
-    struct SoulboundMintedEvent has copy, drop {
-        tier: u8,
-        owner: address,
-        minted_at: u64
-    }
-
-    // ===== Functions =====
+    /// Functions
     fun init(ctx: &mut TxContext) {
         let cap = SoulboundCap {
-            id: object::new(ctx)
+            id: object::new(ctx),
+            total_minted: 0
         };
         transfer::share_object(cap);
     }
 
-    public entry fun mint_soulbound(
+    public fun mint(
         cap: &mut SoulboundCap,
         tier: u8,
         image_url: vector<u8>,
         ctx: &mut TxContext
     ) {
         assert!(tier > 0 && tier <= 3, EInvalidTier);
-        
+
         let sender = tx_context::sender(ctx);
         let url = url::new_unsafe_from_bytes(image_url);
-        
+
         let soulbound = SoulboundNFT {
             id: object::new(ctx),
             tier,
@@ -54,14 +56,16 @@ module triturus::soulbound {
             image_url: url,
             minted_at: tx_context::epoch(ctx)
         };
-        
-        transfer::transfer(soulbound, sender);
-        
+
+        cap.total_minted = cap.total_minted + 1;
+
         event::emit(SoulboundMintedEvent {
-            tier,
             owner: sender,
-            minted_at: tx_context::epoch(ctx)
+            tier,
+            timestamp: tx_context::epoch(ctx)
         });
+
+        transfer::transfer(soulbound, sender);
     }
 
     // ===== View Functions =====

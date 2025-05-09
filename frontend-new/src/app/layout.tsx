@@ -6,14 +6,14 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Triturus DApp",
-  description: "A minimalist pixel-art styled DApp for donations and soulbound NFTs",
+  description: "A minimalist pixel-art styled DApp for donations and subscriptions",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
       <body className={inter.className}>{children}</body>
