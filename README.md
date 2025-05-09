@@ -1,4 +1,4 @@
-# Triturus - Pixel Art DApp
+# Triturus - Earn from your community in WEB3
 
 A minimalist pixel-art styled DApp built on Sui Move that enables SUI wallet connections (including zkLogin) for donations.
 
