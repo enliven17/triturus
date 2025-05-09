@@ -1,11 +1,9 @@
 'use client';
 
 import { WalletKitProvider, ConnectButton } from '@mysten/wallet-kit';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AppPage() {
-  const [isConnected, setIsConnected] = useState(false);
   const router = useRouter();
 
   return (
