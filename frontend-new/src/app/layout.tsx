@@ -16,7 +16,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${inter.className} min-h-screen`}>
+        {/* Floating background shapes */}
+        <div className="floating-shape pink" />
+        <div className="floating-shape blue" />
+        <div className="floating-shape green" />
+        <div className="floating-shape purple" />
+        
+        {/* Main content */}
+        <main className="relative z-10">
+          {children}
+        </main>
+      </body>
     </html>
   );
 }
