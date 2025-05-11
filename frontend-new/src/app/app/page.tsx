@@ -2,6 +2,7 @@
 
 import { WalletProvider, ConnectButton, useWallet } from '@suiet/wallet-kit';
 import '@suiet/wallet-kit/style.css';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -27,10 +28,15 @@ function DonationSection() {
     }
     setLoading(true);
     try {
-      // Example: sendSui is not a real function, you need to use wallet's API to send SUI
-      // Please refer to suiet wallet-kit docs for actual transfer implementation
-      // await wallet.sendSui({ to: recipient, amount: Number(amount) });
-      setSuccess('Transfer successful!');
+      const tx = new TransactionBlock();
+      const amountInMist = Number(amount) * 1e9;
+      const coin = tx.splitCoins(tx.gas, [tx.pure(amountInMist)]);
+      tx.transferObjects([coin], recipient);
+      tx.setGasBudget(10000000); // 0.01 SUI
+      const result = await wallet.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+      });
+      setSuccess('Transfer successful! Tx: ' + result.digest);
       setRecipient('');
       setAmount('');
     } catch (e) {
