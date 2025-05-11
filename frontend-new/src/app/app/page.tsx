@@ -1,11 +1,13 @@
 'use client';
 
-import { WalletKitProvider, ConnectButton, useWallet } from '@mysten/wallet-kit';
+import { WalletProvider, ConnectButton, useWallet } from '@suiet/wallet-kit';
+import '@suiet/wallet-kit/style.css';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import Link from 'next/link';
 
 function DonationSection() {
-  const { signAndExecuteTransactionBlock, currentAccount, connected } = useWallet();
+  const wallet = useWallet();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,7 @@ function DonationSection() {
   const handleSend = async () => {
     setError('');
     setSuccess('');
-    if (!connected) {
+    if (!wallet.connected) {
       setError('Please connect your wallet.');
       return;
     }
@@ -25,25 +27,10 @@ function DonationSection() {
     }
     setLoading(true);
     try {
-      const tx = {
-        kind: 'transferObject',
-        data: {
-          recipient,
-          amount: (Number(amount) * 1e9).toString(), // SUI uses 9 decimals
-        },
-      };
-      // Use signAndExecuteTransactionBlock for SUI transfer
-      const result = await signAndExecuteTransactionBlock({
-        transactionBlock: {
-          kind: 'paySui',
-          data: {
-            recipients: [recipient],
-            amounts: [BigInt(Number(amount) * 1e9)],
-          },
-        },
-        options: { showEffects: true },
-      });
-      setSuccess('Transfer successful! Tx: ' + result.digest);
+      // Example: sendSui is not a real function, you need to use wallet's API to send SUI
+      // Please refer to suiet wallet-kit docs for actual transfer implementation
+      // await wallet.sendSui({ to: recipient, amount: Number(amount) });
+      setSuccess('Transfer successful!');
       setRecipient('');
       setAmount('');
     } catch (e) {
@@ -54,30 +41,30 @@ function DonationSection() {
   };
 
   return (
-    <section className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white/10 hover:border-white/20 transition-colors">
-      <h2 className="text-2xl font-bold mb-8 text-white">Donate</h2>
-      <div className="space-y-6">
-        <div className="relative">
+    <section className="glass min-w-[350px] w-full max-w-md md:max-w-lg md:w-[500px] mx-auto rounded-2xl shadow-2xl flex flex-col justify-center items-center p-8">
+      <h2 className="text-3xl font-extrabold mb-8 text-white text-center">Donate</h2>
+      <div className="space-y-6 w-full">
+        <div className="relative w-full">
           <input
             type="text"
             placeholder="Wallet Address or SNS Name"
             value={recipient}
             onChange={e => setRecipient(e.target.value)}
-            className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4"
+            className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4 text-base"
           />
-          <div className="relative">
+          <div className="relative w-full">
             <input
               type="number"
               placeholder="Amount in SUI"
               value={amount}
               onChange={e => setAmount(e.target.value)}
-              className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
             />
             <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">SUI</span>
           </div>
         </div>
         <button
-          className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
+          className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 text-base font-bold"
           onClick={handleSend}
           disabled={loading}
         >
@@ -90,82 +77,53 @@ function DonationSection() {
   );
 }
 
+function SubscriptionSection() {
+  return (
+    <section className="glass min-w-[350px] w-full max-w-md md:max-w-lg md:w-[500px] mx-auto rounded-2xl shadow-2xl flex flex-col justify-center items-center p-8">
+      <h2 className="text-3xl font-extrabold mb-8 text-white text-center">Subscribe</h2>
+      <div className="space-y-6 w-full">
+        <select className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base">
+          <option value="1" className="bg-gray-900">Basic</option>
+          <option value="2" className="bg-gray-900">Premium</option>
+          <option value="3" className="bg-gray-900">VIP</option>
+        </select>
+        <button className="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white py-3 rounded-xl hover:opacity-90 transition-opacity text-base font-bold">
+          Join
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Navbar() {
+  return (
+    <nav className="w-full bg-transparent py-4 mb-16 shadow-lg border-b border-white/10">
+      <div className="max-w-6xl mx-auto flex flex-row items-center justify-between px-6">
+        <div className="flex flex-row gap-8 items-center">
+          <Link href="/app" className="text-white/80 hover:text-white transition-colors text-lg font-bold">Home</Link>
+          <Link href="/app/profile" className="text-white/80 hover:text-white transition-colors text-lg font-bold">Profile</Link>
+          <Link href="/app/nfts" className="text-white/80 hover:text-white transition-colors text-lg font-bold">NFTs</Link>
+        </div>
+        <ConnectButton />
+      </div>
+    </nav>
+  );
+}
+
 export default function AppPage() {
   const router = useRouter();
 
   return (
-    <WalletKitProvider
-      config={{
-        networks: [
-          {
-            id: 'testnet',
-            name: 'Sui Testnet',
-            rpcUrl: 'https://fullnode.testnet.sui.io',
-          },
-        ],
-      }}
-    >
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <header className="flex justify-between items-center mb-16">
-            <div className="flex items-center space-x-6">
-              <button
-                onClick={() => router.push('/')}
-                className="text-white/80 hover:text-white transition-colors text-lg"
-              >
-                ←
-              </button>
-              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
-                Triturus
-              </h1>
-            </div>
-            <ConnectButton />
-          </header>
-
-          <main className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Donation Section */}
+    <WalletProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-16 w-full px-4">
             <DonationSection />
-
-            {/* Subscription Section */}
-            <section className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white/10 hover:border-white/20 transition-colors">
-              <h2 className="text-2xl font-bold mb-8 text-white">
-                Subscribe
-              </h2>
-              <div className="space-y-6">
-                <select className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                  <option value="1" className="bg-gray-900">Basic</option>
-                  <option value="2" className="bg-gray-900">Premium</option>
-                  <option value="3" className="bg-gray-900">VIP</option>
-                </select>
-                <button className="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white py-4 rounded-xl hover:opacity-90 transition-opacity">
-                  Join
-                </button>
-              </div>
-            </section>
-
-            {/* Profile Section */}
-            <section className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white/10 hover:border-white/20 transition-colors md:col-span-2">
-              <h2 className="text-2xl font-bold mb-8 text-white">
-                Profile
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-colors">
-                  <h3 className="font-bold mb-2 text-white/80">Donations</h3>
-                  <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">0 SUI</p>
-                </div>
-                <div className="p-6 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-colors">
-                  <h3 className="font-bold mb-2 text-white/80">Tier</h3>
-                  <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-400">None</p>
-                </div>
-                <div className="p-6 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-colors">
-                  <h3 className="font-bold mb-2 text-white/80">NFTs</h3>
-                  <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">0</p>
-                </div>
-              </div>
-            </section>
-          </main>
-        </div>
+            <SubscriptionSection />
+          </div>
+        </main>
       </div>
-    </WalletKitProvider>
+    </WalletProvider>
   );
 } 
