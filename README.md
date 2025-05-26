@@ -1,10 +1,9 @@
 # Triturus - Earn from your community in WEB3
 
-A minimalist pixel-art styled DApp built on Sui Move that enables SUI wallet connections (including zkLogin) for donations.
+A DApp built on Sui Move that enables SUI wallet connections (including zkLogin) for donations.
 
 ## Features
 
-- 🎨 Pixel art styling with CRT monitor effects
 - 💰 One-time donations and subscriptions
 - 🎮 Soulbound NFT collection for donors
 - 🔐 SUI wallet integration with zkLogin support
@@ -70,5 +69,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Sui Foundation for the amazing blockchain platform
-- The pixel art community for inspiration
 - All contributors and supporters 
